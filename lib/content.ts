@@ -6,12 +6,13 @@
 
 // ── Navigation ────────────────────────────────────────────────
 export const NAV_LINKS = [
-  { label: "Home", href: "#home" },
-  { label: "About", href: "#about" },
-  { label: "Services", href: "#services" },
-  { label: "Portfolio", href: "#portfolio" },
-  { label: "Contact", href: "#contact" },
-  { label: "Partnerships", href: "#partnerships" },
+  { label: "Home", href: "/#home" },
+  { label: "About", href: "/#about" },
+  { label: "Services", href: "/#services" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Portfolio", href: "/#portfolio" },
+  { label: "Contact", href: "/#contact" },
+  { label: "Partnerships", href: "/#partnerships" },
 ] as const;
 
 export const SECTION_IDS = ["home", "about", "services", "portfolio", "contact", "partnerships"] as const;
