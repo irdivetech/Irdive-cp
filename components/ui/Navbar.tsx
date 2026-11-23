@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { NAV_LINKS, SECTION_IDS } from "@/lib/content";
 
@@ -10,9 +11,13 @@ const LOGO_HEIGHT_TOP = 64;   // top bar (not scrolled)
 const LOGO_HEIGHT_PILL = 52;  // floating pill (scrolled)
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("home");
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isPricingPage = pathname === "/pricing";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -21,6 +26,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    if (pathname !== "/") return;
     const observers: IntersectionObserver[] = [];
     const sectionMap: Record<string, number> = {};
     SECTION_IDS.forEach((id) => {
@@ -38,23 +44,50 @@ export default function Navbar() {
       observers.push(obs);
     });
     return () => observers.forEach((o) => o.disconnect());
-  }, []);
+  }, [pathname]);
+
+  const checkIsActive = (linkHref: string) => {
+    if (linkHref === "/pricing") {
+      return isPricingPage;
+    }
+    if (isPricingPage) {
+      return false;
+    }
+    const cleanId = linkHref.replace(/^\/?#/, "");
+    return activeSection === cleanId || (cleanId === "home" && activeSection === "hero");
+  };
 
   const handleNavClick = (href: string) => {
     setMobileOpen(false);
-    if (href === "#home") {
-      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    if (href === "/pricing") {
+      if (pathname === "/pricing") {
+        window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      } else {
+        router.push("/pricing");
+      }
       return;
     }
-    const id = href.replace("#", "");
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+
+    const id = href.replace(/^\/?#/, "");
+    if (pathname === "/") {
+      if (id === "home" || id === "hero") {
+        window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+        return;
+      }
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      router.push(`/#${id}`);
+    }
   };
 
   const Logo = ({ height }: { height: number }) => (
     <a
-      href="#home"
-      onClick={() => handleNavClick("#home")}
+      href="/#home"
+      onClick={(e) => {
+        e.preventDefault();
+        handleNavClick("/#home");
+      }}
       aria-label="IRDIVE Technology"
       style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}
     >
@@ -80,7 +113,7 @@ export default function Navbar() {
   const NavLinks = ({ layoutId }: { layoutId: string }) => (
     <>
       {NAV_LINKS.map((link) => {
-        const isActive = activeSection === link.href.replace("#", "");
+        const isActive = checkIsActive(link.href);
         return (
           <button
             key={link.href}
@@ -171,22 +204,25 @@ export default function Navbar() {
           style={{ overflow: "hidden", borderTop: "1px solid rgba(0,0,0,0.06)" }}
         >
           <div style={{ padding: "0.75rem 1.25rem 1.25rem", display: "flex", flexDirection: "column", gap: "0" }}>
-            {NAV_LINKS.map((link) => (
-              <button
-                key={link.href}
-                onClick={() => handleNavClick(link.href)}
-                style={{
-                  width: "100%", textAlign: "left", background: "none", border: "none",
-                  cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "1rem",
-                  fontWeight: activeSection === link.href.replace("#", "") ? 600 : 400,
-                  color: activeSection === link.href.replace("#", "") ? "#2196F3" : "#374151",
-                  padding: "0.65rem 0", borderBottom: "1px solid rgba(0,0,0,0.05)",
-                  transition: "color 0.2s",
-                }}
-              >
-                {link.label}
-              </button>
-            ))}
+            {NAV_LINKS.map((link) => {
+              const isActive = checkIsActive(link.href);
+              return (
+                <button
+                  key={link.href}
+                  onClick={() => handleNavClick(link.href)}
+                  style={{
+                    width: "100%", textAlign: "left", background: "none", border: "none",
+                    cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "1rem",
+                    fontWeight: isActive ? 600 : 400,
+                    color: isActive ? "#2196F3" : "#374151",
+                    padding: "0.65rem 0", borderBottom: "1px solid rgba(0,0,0,0.05)",
+                    transition: "color 0.2s",
+                  }}
+                >
+                  {link.label}
+                </button>
+              );
+            })}
             <div style={{ paddingTop: "0.875rem" }}>
               <a
                 href="https://www.instagram.com/irdive.tech?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
